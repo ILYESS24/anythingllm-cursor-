@@ -11,7 +11,7 @@
   },
   "scripts": {
     "start": "cd server && npm start",
-    "build": "cd frontend && yarn build:ci && cd ../server && cp -r ../frontend/dist ./public",
+    "build": "cd frontend && yarn build:ci && cd ../server && xcopy /E /I /Y ..\\frontend\\dist public",
     "test": "jest",
     "lint": "cd server && yarn lint && cd ../frontend && yarn lint && cd ../collector && yarn lint",
     "setup": "cd server && yarn && cd ../collector && yarn && cd ../frontend && yarn && cd .. && yarn setup:envs && yarn prisma:setup && echo \"Please run yarn dev:server, yarn dev:collector, and yarn dev:frontend in separate terminal tabs.\"",
