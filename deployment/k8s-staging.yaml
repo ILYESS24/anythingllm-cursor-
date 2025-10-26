@@ -1,0 +1,82 @@
+# Kubernetes Deployment Configuration
+
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: anythingllm-staging
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: anythingllm-production
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: anythingllm-staging
+  namespace: anythingllm-staging
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: anythingllm-staging
+  template:
+    metadata:
+      labels:
+        app: anythingllm-staging
+    spec:
+      containers:
+      - name: anythingllm
+        image: ghcr.io/anythingllm/anythingllm:staging
+        ports:
+        - containerPort: 3001
+        env:
+        - name: NODE_ENV
+          value: "production"
+        - name: ANYTHING_LLM_RUNTIME
+          value: "docker"
+        - name: DATABASE_URL
+          valueFrom:
+            secretKeyRef:
+              name: anythingllm-secrets
+              key: database-url
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "250m"
+          limits:
+            memory: "1Gi"
+            cpu: "500m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: anythingllm-staging-service
+  namespace: anythingllm-staging
+spec:
+  selector:
+    app: anythingllm-staging
+  ports:
+  - port: 80
+    targetPort: 3001
+  type: LoadBalancer
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: anythingllm-staging-ingress
+  namespace: anythingllm-staging
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+spec:
+  rules:
+  - host: staging.anythingllm.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: anythingllm-staging-service
+            port:
+              number: 80
